@@ -1,4 +1,5 @@
 const express = require('express'),
+  path=require("path"),
   glob = require('glob'),
   favicon = require('serve-favicon'),
   logger = require('morgan'),
@@ -8,6 +9,7 @@ const express = require('express'),
   methodOverride = require('method-override');
 
 module.exports = function(app, config) {
+  console.log("Test3:" , config);
   const env = process.env.NODE_ENV || 'development';
   app.locals.ENV = env;
   app.locals.ENV_DEVELOPMENT = env == 'development';
@@ -23,7 +25,7 @@ module.exports = function(app, config) {
   app.use(express.static(config.root + '/public'));
   app.use(methodOverride());
 
-  let controllers = glob.sync(config.root + '/app/controllers/*.js');
+  let controllers = glob.sync(path.join(config.root , "app", "controllers" , "*.js" ));
   controllers.forEach(function (controller) {
     require(controller)(app);
   });

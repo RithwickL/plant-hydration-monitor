@@ -1,3 +1,5 @@
+console.log("TEST"+__dirname);
+
 const express = require('express'),
   models = require('./app/models'),
   config = require('./config/config');
