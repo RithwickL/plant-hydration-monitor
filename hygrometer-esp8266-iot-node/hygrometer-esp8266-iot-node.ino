@@ -1,71 +1,125 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
+#include <WiFiManager.h>
 
-// NOTE: Change these values to the WiFi values for your personal WiFi
-const char SSID[] =  "SSID"; // Your current WiFi network SSID (can be hidden)
-const char PASS[] =  "XXXXXXXXXX"; // Your current WiFi network password
-const char *SERVER = "192.168.0.0"; // Your IP address on the WiFi network
+const char *SERVER = "192.168.86.36";
 const int SERVER_PORT = 3000;
+const int SLEEP_MS = 5 * 60e6;
+const boolean deepSleep = false;
 
-// Main loop process:
-//   1) Wake from sleep
-//   2) Read from the sensor NUM_READS times, READ_DELAY_APART second apart
-//   3) Average readings for a value and POST back to the server
-//   4) Sleep for SLEEP_MS
+WiFiManager wifiManager;
+const char *softAPSSID = "Plant_Module_Setup";
+const char *softAPPass = "Bio::Neos";
+const char *softAPHostname = "Plant_Module_Setup";
+A
 const int NUM_READS = 10;
-const int READ_DELAY_MS = 100;
-// 5 minutes:
-//const int SLEEP_US = 5 * 60 * 1000000;
-const int SLEEP_US = 5 * 1000000;
+const int READ_DELAY_MS = 1000;
+const int WAIT_DELAY_MS = 50000;
+const int MAX_SOFTAP_CLIENTS = 1;
 
 WiFiClient client;
+WiFiServer server(80); // Declare server
+
+void handleClearCredentials()
+{
+  Serial.println("Clearing Wi-Fi credentials...");
+  wifiManager.resetSettings();
+  Serial.println("Wi-Fi credentials cleared. Restarting...");
+  ESP.restart();
+}
+
 void setup()
 {
-  // Turn on serial communication for logging
-  // TODO: when in production mode we will want to disable serial output to save energy
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(10);
 
-  Serial.print("\n\nConnecting to: ");
-  Serial.println(SSID);
+  Serial.println("Starting WiFi setup...");
 
-  int status = WL_IDLE_STATUS;
+  wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 1, 1), IPAddress(192, 168, 1, 1), IPAddress(255, 255, 255, 0));
+  wifiManager.setDebugOutput(false);
 
-  // Connect to WiFi, checking status every 5 seconds
-  // TODO: This can be improved to be more asynchronous
-  while (status != WL_CONNECTED)
+  if (!wifiManager.autoConnect(softAPSSID, softAPPass))
   {
-    Serial.print(".");
-    status = WiFi.begin(SSID, PASS);
+    Serial.println("Failed to connect and hit timeout");
+    delay(3000);
+    ESP.reset();
     delay(5000);
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
 
-  // Setup the A0 pin to read the sensor analog value using ADC
-  pinMode(A0, INPUT);
+  // Check if connected to WiFi
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    // Configure SOFTAP
+    WiFi.softAPConfig(IPAddress(192, 168, 1, 1), IPAddress(192, 168, 1, 1), IPAddress(255, 255, 255, 0));
+    WiFi.softAP(softAPSSID, softAPPass);
+    // Set the hostname using the DHCP server hostname option
+    WiFi.hostname(softAPHostname);
+
+    server.begin(); // Start the server
+
+    Serial.println("WiFi connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("ESP Board MAC Address: ");
+    Serial.println(WiFi.macAddress());
+
+    pinMode(A0, INPUT);
+
+    Serial.println("Setup completed.");
+  }
+  else
+  {
+    Serial.println("WiFi connection failed. Check your credentials or connection.");
+  }
 }
 
 void loop()
 {
+
+  if (WiFi.softAPgetStationNum() > MAX_SOFTAP_CLIENTS)
+  {
+    Serial.println("Max clients reached. Disconnecting additional clients.");
+    WiFiClient client = server.available();
+    if (client)
+    {
+      // Disconnect the first connected client
+      client.stop();
+      Serial.println("Client disconnected.");
+
+      // Additional condition to clear credentials (customize as needed)
+      if (someCondition)
+      {
+        handleClearCredentials();
+      }
+    }
+  }
+
   Serial.println("Starting soil moisture measurement...");
-  // Read 10 values from the sensor, 1 second apart 
+  // Read 10 values from the sensor, 1 second apart
   int totSum = 0;
-  for (int k = 0; k < NUM_READS; k++){
-    totSum += analogRead(A0);
-    // TODO: Should we go to deeper sleep here?
+  for (int k = 0; k < NUM_READS; k++)
+  {
+    int sensorValue = analogRead(A0);
+    Serial.print("Read sensor value: ");
+    Serial.println(sensorValue);
+    totSum += sensorValue;
     delay(READ_DELAY_MS);
   }
-  // This smooths out the sensor readings ten times with one second intervals
-  // TODO: Let's review the reasoning behind this smoothing, not sure I understand 
-  //   what we are doing here (or why). At a minimum we should get rid of the magic
-  //   numbers so we can change the number of reads
-  int moisture = ((totSum / NUM_READS) / 900) * 100; 
-  Serial.println("Done: " + String(moisture));
+
+  // Calculate the moisture value
+  int moisture = ((totSum / NUM_READS) / 900) * 100;
+  Serial.print("Calculated moisture value: ");
+  Serial.println(moisture);
 
   // Open a basic HTTP connection to the server
-  Serial.println("Attempted to report moisture value of '" + String(moisture) + "' to server at: ");
-  Serial.println("  " + String(SERVER) + ":" + String(SERVER_PORT));
-  if (client.connect(SERVER, SERVER_PORT))  
+  Serial.print("Attempting to report moisture value of ");
+  Serial.print(moisture);
+  Serial.print(" to server at: ");
+  Serial.print(SERVER);
+  Serial.print(":");
+  Serial.println(SERVER_PORT);
+
+  if (client.connect(SERVER, SERVER_PORT))
   {
     // Create our POST request message Body content
     String postStr = "sensorVal=";
@@ -82,17 +136,25 @@ void loop()
 
     // Close our HTTP connection
     client.stop();
-    Serial.println("Hooray! The request was sucessfully processed!");
+    Serial.println("Hooray! The post was successfully processed!");
   }
   else
   {
-    Serial.println("The request could not be processed or timed out.");  
+    Serial.println("The post could not be processed or timed out.");
   }
-  
+
   // Wait in Deep Sleep before repeating the measurement (to save battery)
   // SEE ALSO: https://randomnerdtutorials.com/esp8266-deep-sleep-with-arduino-ide/
-  // NOTE: Be sure to physically connect GPIO16 to RST or the device will not be
-  //   able to wake itself up.
-  Serial.println("Dropping to Deep Sleep for " + String(SLEEP_US) + " microseconds...");  
-  ESP.deepSleep(SLEEP_US); 
+  // NOTE: disable this delay to enable the module to send sensor values every 10 seconds
+
+  if (deepSleep == false)
+  {
+    Serial.println("Waiting before repeating the measurement...");
+    delay(WAIT_DELAY_MS);
+  }
+  else
+  {
+    Serial.println("Dropping to Deep Sleep...");
+    ESP.deepSleep(SLEEP_MS);
+  }
 }
