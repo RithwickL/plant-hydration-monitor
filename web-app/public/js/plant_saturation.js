@@ -8,8 +8,8 @@ $(document).ready(function() {
     $.get( '/saturation', function(data) {
       console.log(data);
       value = data.value;
-      let decimal = (1023-value)/1023;
-      // const decimal = value / 1023;
+      //let decimal = (1023-value)/1023;
+      const decimal = value / 1023;
       const percent = decimal * 100;
       progressbar.val(percent);
 
@@ -18,13 +18,15 @@ $(document).ready(function() {
       deg = 360 * decimal;
       if (percent > 50) {
         $ppc.addClass('gt-50');
-      } else {
-        $ppc.removeClass('gt-50');
       }
+      else
+      {
+        $ppc.removeClass('gt-50')
+      } 
 
       $('.ppc-progress-fill').css('transform', 'rotate(' + deg + 'deg)');
       // Set the value into the background color using rainbowvis
-      $('.ppc-percents').css("background-color", '#' + rainbow.colorAt(percent));
+      $('.ppc-percents').css("background", '#' + rainbow.colorAt(percent));
     });
   };
 
