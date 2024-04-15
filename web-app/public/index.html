@@ -11,7 +11,7 @@
   <!-- Logo Container -->
   <div class="logo-container">
     <!-- Logo -->
-    <a href="http://192.168.86.42:3000/">
+    <a href="#" id="homeLink">
       <img src="img/BioNeos.png" alt="Bio::Neos Logo" class="logo" width="50" height="100">
     </a>
   </div>
@@ -19,11 +19,11 @@
   <!-- Navbar Container -->
   <div class="navbar-container">
     <div class="navbar">
-      <a class="active" href="http://192.168.86.42:3000/">Home</a>
-      <a href="http://192.168.86.42:3000/">Dashboard</a>
-      <a href="http://192.168.86.42:3000/">Monitors</a>
-      <a href="http://192.168.86.42:3000/">Settings</a>
-      <a href="http://192.168.86.42:3000/">Help</a>
+      <a class="active" href="#" id="homeNav">Home</a>
+      <a href="#" id="dashboardNav">Dashboard</a>
+      <a href="#" id="monitorsNav">Monitors</a>
+      <a href="#" id="settingsNav">Settings</a>
+      <a href="#" id="helpNav">Help</a>
     </div>
   </div>
 
@@ -114,7 +114,10 @@
           <button class="button">Factory Reset Monitor</button>
         </div>
       </div>
+      <h3></h3>
+      <button class="button">Add Monitor</button>
     </div>
+
   </main>
 
   <!-- Footer -->
@@ -123,15 +126,48 @@
     <script src="js/rainbowvis.js"></script>
     <script src="js/plant_saturation.js"></script>
     <script>
-      // Function to toggle the login menu
-      function toggleLoginMenu() {
-        var loginMenu = document.getElementById("loginMenu");
-        if (loginMenu.style.display === "block") {
-          loginMenu.style.display = "none";
-        } else {
-          loginMenu.style.display = "block";
-        }
+      // Function to get local IP address
+      function getLocalIPAddress() {
+          // Create a new connection to an external server
+          var rtcPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+          var pc = new rtcPeerConnection({
+              iceServers: []
+          });
+
+          // Create a callback function to get the local IP address
+          function ipCallback(ip) {
+              console.log('Local IP Address:', ip);
+          }
+
+          // Create a callback function to handle IP address enumeration
+          function handleCandidate(candidate) {
+              var ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+              var match = ipRegex.exec(candidate);
+              if (!match || match[1] === '127.0.0.1') {
+                  return;
+              }
+              ipCallback(match[1]);
+          }
+
+          // Create a new data channel to trigger candidate gathering
+          pc.createDataChannel('');
+
+          // Create a callback function to handle candidate gathering
+          pc.onicecandidate = function(ice) {
+              if (!ice || !ice.candidate || !ice.candidate.candidate) {
+                  return;
+              }
+              handleCandidate(ice.candidate.candidate);
+          };
+
+          // Create an SDP offer to trigger candidate gathering
+          pc.createOffer().then(function(offer) {
+              pc.setLocalDescription(offer);
+          });
       }
+
+      // Call the function when the page loads
+      window.onload = getLocalIPAddress;
     </script>
   </footer>
 
