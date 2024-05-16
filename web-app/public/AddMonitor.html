@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio::Neos Plant Monitor</title>
+    <link rel="icon" type="image/png" href="img/transparent_leaves_1.png">
+    <!-- Link to the CSS file from the original index.html -->
+    <link rel="stylesheet" href="css/plant_saturation.css">
+</head>
+
+<body>
+    <!-- Logo Container -->
+    <div class="logo-container">
+        <!-- Logo -->
+        <a href="#" id="homeLink">
+            <img src="img/BioNeos.png" alt="Bio::Neos Logo" class="logo" width="50" height="100">
+        </a>
+    </div>
+
+    <!-- Navbar Container -->
+    <div class="navbar-container">
+        <div class="navbar">
+            <a class="active" href="#" id="homeNav">Home</a>
+            <a href="#" id="dashboardNav">Dashboard</a>
+            <a href="#" id="monitorsNav">Monitors</a>
+            <a href="#" id="settingsNav">Settings</a>
+            <a href="#" id="helpNav">Help</a>
+        </div>
+    </div>
+
+    <!-- Plant Monitor Text Container -->
+    <div class="container">
+        <h2>Bio::Neos Plant Monitor</h2>
+    </div>
+
+    <!-- Add Monitor Form -->
+    <div class="container2" style="background: #552200;">
+        <form id="addMonitorForm" class="form-container" style="color: white;">
+            <h2>Add Monitor</h2>
+            <label for="monitorId"><b>Monitor ID</b></label>
+            <input type="number" placeholder="Enter Monitor ID" name="monitorId" required>
+            <div class="container2" style="background: #552200;"></div>
+
+            <label for="name"><b>Name</b></label>
+            <input type="text" placeholder="Enter Name" name="name" required>
+
+            <label for="location"><b>Location</b></label>
+            <input type="text" placeholder="Enter Location" name="location" required>
+
+            <label for="MAC"><b>MAC</b></label>
+            <input type="text" placeholder="Enter MAC" name="MAC" required>
+
+            <label for="createdAt"><b>Created At</b></label>
+            <input type="datetime-local" name="createdAt" required>
+
+            <label for="updatedAt"><b>Updated At</b></label>
+            <input type="datetime-local" name="updatedAt" required>
+
+            <button type="submit" class="btn">Add</button>
+            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <script src="js/jquery-3.1.1.min.js"></script>
+        <script src="js/rainbowvis.js"></script>
+        <script src="js/plant_saturation.js"></script>
+        <script>
+            // Function to get local IP address
+            function getLocalIPAddress() {
+                // Create a new connection to an external server
+                var rtcPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+                var pc = new rtcPeerConnection({
+                    iceServers: []
+                });
+
+                // Create a callback function to get the local IP address
+                function ipCallback(ip) {
+                    console.log('Local IP Address:', ip);
+                }
+
+                // Create a callback function to handle IP address enumeration
+                function handleCandidate(candidate) {
+                    var ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+                    var match = ipRegex.exec(candidate);
+                    if (!match || match[1] === '127.0.0.1') {
+                        return;
+                    }
+                    ipCallback(match[1]);
+                }
+
+                // Create a new data channel to trigger candidate gathering
+                pc.createDataChannel('');
+
+                // Create a callback function to handle candidate gathering
+                pc.onicecandidate = function (ice) {
+                    if (!ice || !ice.candidate || !ice.candidate.candidate) {
+                        return;
+                    }
+                    handleCandidate(ice.candidate.candidate);
+                };
+
+                // Create an SDP offer to trigger candidate gathering
+                pc.createOffer().then(function (offer) {
+                    pc.setLocalDescription(offer);
+                });
+            }
+
+            // Call the function when the page loads
+            window.onload = getLocalIPAddress;
+
+            // Function to handle form submission
+            document.getElementById("addMonitorForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent default form submission
+
+                // Retrieve form data
+                var monitorId = document.getElementsByName("monitorId")[0].value;
+                var name = document.getElementsByName("name")[0].value;
+                var location = document.getElementsByName("location")[0].value;
+                var MAC = document.getElementsByName("MAC")[0].value;
+                var createdAt = document.getElementsByName("createdAt")[0].value;
+                var updatedAt = document.getElementsByName("updatedAt")[0].value;
+
+                // Send form data to server (You need to implement this part)
+                // Example: You can use fetch API to send data to server
+                fetch('plant.db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        monitorId: monitorId,
+                        name: name,
+                        location: location,
+                        MAC: MAC,
+                        createdAt: createdAt,
+                        updatedAt: updatedAt
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    // Handle success response from server
+                    // For example, show a success message to the user
+                    alert('Monitor added successfully!');
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    // Handle error response from server
+                    // For example, show an error message to the user
+                    alert('Error adding monitor. Please try again.');
+                });
+            });
+        </script>
+    </footer>
+
+    <div style="background-color:gray;color:white">
+        <h4>Contact Info</h4>
+        <p>Phone: 3091212121</p>
+        <p>Coralville, IA</p>
+        <p>BioNeosHelp@gmail.com</p>
+        <h6>© Since 3/8/2024, doing business as BioNeos Plant Hydration Monitor</h6>
+    </div>
+</body>
+
+</html>

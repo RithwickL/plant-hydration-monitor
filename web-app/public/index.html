@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="icon" type="image/png" href="img/transparent_leaves_1.png">
   <link rel="stylesheet" href="css/plant_saturation.css">
 </head>
+
 <body>
   <!-- Logo Container -->
   <div class="logo-container">
@@ -116,7 +118,7 @@
       </div>
     </div>
   </main>
-  
+
   <div class="container2" style="background: #552200;">
   </div>
   <main>
@@ -126,7 +128,8 @@
           <h3>Monitor Settings:</h3>
         </div>
         <div class="button-container" style="background: #552200;">
-          <button class="button">Add Monitor</button>
+          <button class="button" id="addMonitorButton" onclick="window.location.href = 'addMonitor.html';">Add
+            Monitor</button>
           <button class="button">Remove Monitor</button>
         </div>
       </div>
@@ -144,42 +147,42 @@
     <script>
       // Function to get local IP address
       function getLocalIPAddress() {
-          // Create a new connection to an external server
-          var rtcPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-          var pc = new rtcPeerConnection({
-              iceServers: []
-          });
+        // Create a new connection to an external server
+        var rtcPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+        var pc = new rtcPeerConnection({
+          iceServers: []
+        });
 
-          // Create a callback function to get the local IP address
-          function ipCallback(ip) {
-              console.log('Local IP Address:', ip);
+        // Create a callback function to get the local IP address
+        function ipCallback(ip) {
+          console.log('Local IP Address:', ip);
+        }
+
+        // Create a callback function to handle IP address enumeration
+        function handleCandidate(candidate) {
+          var ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+          var match = ipRegex.exec(candidate);
+          if (!match || match[1] === '127.0.0.1') {
+            return;
           }
+          ipCallback(match[1]);
+        }
 
-          // Create a callback function to handle IP address enumeration
-          function handleCandidate(candidate) {
-              var ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
-              var match = ipRegex.exec(candidate);
-              if (!match || match[1] === '127.0.0.1') {
-                  return;
-              }
-              ipCallback(match[1]);
+        // Create a new data channel to trigger candidate gathering
+        pc.createDataChannel('');
+
+        // Create a callback function to handle candidate gathering
+        pc.onicecandidate = function (ice) {
+          if (!ice || !ice.candidate || !ice.candidate.candidate) {
+            return;
           }
+          handleCandidate(ice.candidate.candidate);
+        };
 
-          // Create a new data channel to trigger candidate gathering
-          pc.createDataChannel('');
-
-          // Create a callback function to handle candidate gathering
-          pc.onicecandidate = function(ice) {
-              if (!ice || !ice.candidate || !ice.candidate.candidate) {
-                  return;
-              }
-              handleCandidate(ice.candidate.candidate);
-          };
-
-          // Create an SDP offer to trigger candidate gathering
-          pc.createOffer().then(function(offer) {
-              pc.setLocalDescription(offer);
-          });
+        // Create an SDP offer to trigger candidate gathering
+        pc.createOffer().then(function (offer) {
+          pc.setLocalDescription(offer);
+        });
       }
 
       // Call the function when the page loads
@@ -194,9 +197,10 @@
     <p>Coralville, IA</p>
     <p>BioNeosHelp@gmail.com</p>
     <h6>© Since 3/8/2024, doing business as BioNeos Plant Hydration Monitor</h6>
-    </div>
+  </div>
   </div>
 
 
 </body>
+
 </html>
