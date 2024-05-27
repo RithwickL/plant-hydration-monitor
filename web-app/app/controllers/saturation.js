@@ -1,21 +1,49 @@
 const express = require('express'),
   router = express.Router(),
-  db = require('./../models');
+  db = require('./../../models');
 
-let saturation = 1023;
 module.exports = function (app) {
-  app.use('/saturation', router);
+  app.use('/api', router);
 };
 
-// Page templates:
 /**
- * Render the main page
+ * Return all saturation values for a single plant.
+ * @return 
+ *   Array of objects with properties [plant_id, moisture, created_at, updated_at]
  */
-router.get('/', function(req, res, next) {
-  res.json({ value: saturation });
+router.get('/saturation/:plant_id', async function(req, res, next) {
+  console.log('here');
+  // TODO: Handle a bad request more robustly
+  const result = await db.Moisture.findAll({
+    where: { plantId: req.params.plant_id },
+  });
+
+  let moistureValues = [];
+  result.forEach((obj) => { 
+    moistureValues.push(obj.toJSON());
+  });
+  console.log(moistureValues);
+  res.json(moistureValues);
 }) ;
 
-router.post('/', async function(req, res, next) {
+/**
+ * Return the most recent recorded saturation
+ * @return
+ *   Single Object with properties [plant_id, moisture, created_at, updated_at]
+ */
+router.get('/saturation/:plant_id/last', async function(req, res, next) {
+  // TODO: Handle a bad request more robustly
+  const moistureValues = await db.Moisture.findOne({
+    where: { "plantId": req.params.plant_id },
+    order: [[ "createdAt", "DESC" ]]
+  });
+  res.json(moistureValues);
+}) ;
+
+/** 
+ * Create a new saturation value for a plant.
+ */
+router.post('/saturation', async function(req, res, next) {
   saturation = req.body.sensorVal;
   console.log('Received Saturation Value: ', saturation);
 
