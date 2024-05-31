@@ -36,7 +36,7 @@
             "includePath": [
                 "C:\\Users\\Rithu\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\include",
                 "C:\\Users\\Rithu\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\lwip2\\include",
-                "C:\\Users\\Rithu\\AppData\\Local\\Temp\\arduino\\sketches\\D6FC8231F5CC8F2A2B54B0FFEF57AFBF\\core",
+                "C:\\Users\\Rithu\\Documents\\build\\core",
                 "C:\\Users\\Rithu\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\cores\\esp8266",
                 "C:\\Users\\Rithu\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\variants\\nodemcu",
                 "C:\\Users\\Rithu\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\ESP8266WiFi\\src",
