@@ -6,7 +6,7 @@
 #define NUM_READS 10          // Number of sensor readings to average
 #define READ_DELAY_MS 1000    // Delay between sensor readings in milliseconds
 #define WAIT_DELAY_MS 10000   // Wait time between measurements in milliseconds
-#define SLEEP_MS 10000     // Deep sleep duration in microseconds (10 minutes)
+#define SLEEP_DURATION_US 600000000  // Deep sleep duration in microseconds (10 minutes)
 
 const char* SERVER = "your.server.address";  // Replace with your server address
 const int SERVER_PORT = 80;                  // Replace with your server port
@@ -19,8 +19,7 @@ void listNetworks();
 const boolean deepSleep = true;
 
 void setup() {
-  pinMode(2, OUTPUT);
-  digitalWrite(2, LOW); 
+  pinMode(D4, INPUT);  // Ensure the D4 pin is set to input for reading sensor
   Serial.begin(9600);
   while (!Serial) {
   }
@@ -82,14 +81,16 @@ void loop() {
   Serial.println("Starting soil moisture measurement...");
   int totSum = 0;
   for (int k = 0; k < NUM_READS; k++) {
-    int sensorValue = analogRead(A0);
+    int sensorValue = digitalRead(D4);  // Read the digital value from the sensor
     Serial.print("Read sensor value: ");
     Serial.println(sensorValue);
     totSum += sensorValue;
     delay(READ_DELAY_MS);
   }
 
-  int moisture = ((totSum / NUM_READS) / 900) * 100;
+  int averageValue = totSum / NUM_READS;
+  int moisture = map(averageValue, 0, 1, 100, 0); // Mapping the sensor value to 0-100%
+
   Serial.print("Calculated moisture value: ");
   Serial.println(moisture);
 
@@ -101,11 +102,10 @@ void loop() {
   Serial.println(SERVER_PORT);
 
   if (client.connect(SERVER, SERVER_PORT)) {
-    String postStr = "sensorVal=";
-    postStr += String(moisture);
+    String postStr = "sensorVal=" + String(moisture);
 
     client.print("POST /saturation HTTP/1.1\r\n");
-    client.print("Host: localhost\r\n");
+    client.print("Host: " + String(SERVER) + "\r\n");
     client.print("Connection: close\r\n");
     client.print("Content-Type: application/x-www-form-urlencoded\r\n");
     client.print("Content-Length: " + String(postStr.length()) + "\r\n");
@@ -123,7 +123,7 @@ void loop() {
     delay(WAIT_DELAY_MS);
   } else {
     Serial.println("Dropping to Deep Sleep...");
-    ESP.deepSleep(SLEEP_MS);
+    ESP.deepSleep(SLEEP_DURATION_US);
   }
 }
 
